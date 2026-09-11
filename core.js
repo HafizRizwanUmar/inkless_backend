@@ -20,7 +20,8 @@ try {
                 'http://localhost:5173',
                 'https://inkless-fyp.vercel.app',
                 'https://inklesslms.com',
-                'https://www.inklesslms.com'
+                'https://www.inklesslms.com',
+                'https://inklessfrontend.vercel.app'
             ];
             if (!origin || allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
