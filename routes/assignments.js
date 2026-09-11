@@ -21,8 +21,14 @@ const auth = (req, res, next) => {
 };
 
 // Multer Storage Configuration (Permanent Storage)
+const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/assignments');
+const fs = require('fs');
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
-    destination: path.join(__dirname, '../public/uploads/assignments'),
+    destination: uploadDir,
     filename: function (req, file, cb) {
         cb(null, 'ASSIGN-' + Date.now() + path.extname(file.originalname));
     }

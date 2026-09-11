@@ -32,8 +32,14 @@ const auth = (req, res, next) => {
 };
 
 // Multer Config for Generic File Submissions (Images, PDF, ZIP)
+const uploadDirSub = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/submissions');
+const fs = require('fs');
+if (!process.env.VERCEL && !fs.existsSync(uploadDirSub)) {
+    fs.mkdirSync(uploadDirSub, { recursive: true });
+}
+
 const storage = multer.diskStorage({
-    destination: path.join(__dirname, '../public/uploads/submissions'),
+    destination: uploadDirSub,
     filename: function (req, file, cb) {
         cb(null, 'SUB-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
     }

@@ -19,8 +19,14 @@ const auth = (req, res, next) => {
 const multer = require('multer');
 const path = require('path');
 
+const uploadDirLabTask = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/labTasks');
+const fs = require('fs');
+if (!process.env.VERCEL && !fs.existsSync(uploadDirLabTask)) {
+    fs.mkdirSync(uploadDirLabTask, { recursive: true });
+}
+
 const storage = multer.diskStorage({
-    destination: '/tmp',
+    destination: uploadDirLabTask,
     filename: function (req, file, cb) {
         cb(null, 'LABTASK-' + Date.now() + path.extname(file.originalname));
     }

@@ -19,8 +19,14 @@ const auth = (req, res, next) => {
     }
 };
 
+const uploadDirLabSub = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/labSubmissions');
+const fs = require('fs');
+if (!process.env.VERCEL && !fs.existsSync(uploadDirLabSub)) {
+    fs.mkdirSync(uploadDirLabSub, { recursive: true });
+}
+
 const storage = multer.diskStorage({
-    destination: '/tmp',
+    destination: uploadDirLabSub,
     filename: function (req, file, cb) {
         cb(null, 'LABSUB-' + Date.now() + path.extname(file.originalname));
     }
