@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  inkless-backend:
+    build: .
+    container_name: inkless-backend
+    restart: always
+    ports:
+      - "5015:5015"
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
