@@ -21,17 +21,21 @@ const auth = (req, res, next) => {
 };
 
 // Multer Storage Configuration (Permanent Storage)
-const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/assignments');
-const fs = require('fs');
-if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination: uploadDir,
-    filename: function (req, file, cb) {
-        cb(null, 'ASSIGN-' + Date.now() + path.extname(file.originalname));
-    }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'assignments',
+    resource_type: 'auto'
+  },
 });
 
 // Init Upload
@@ -66,7 +70,7 @@ router.post('/', auth, (req, res) => {
         }
 
         const { title, description, classId, deadline, marks, enableAI, submissionTypes } = req.body;
-        const fileUrl = req.file ? `/uploads/assignments/${req.file.filename}` : null;
+        const fileUrl = req.file ? req.file.path : null;
 
         let parsedSubmissionTypes = {
             code: false,

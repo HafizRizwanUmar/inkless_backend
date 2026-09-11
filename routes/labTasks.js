@@ -19,17 +19,21 @@ const auth = (req, res, next) => {
 const multer = require('multer');
 const path = require('path');
 
-const uploadDirLabTask = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/labTasks');
-const fs = require('fs');
-if (!process.env.VERCEL && !fs.existsSync(uploadDirLabTask)) {
-    fs.mkdirSync(uploadDirLabTask, { recursive: true });
-}
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination: uploadDirLabTask,
-    filename: function (req, file, cb) {
-        cb(null, 'LABTASK-' + Date.now() + path.extname(file.originalname));
-    }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'labTasks',
+    resource_type: 'auto'
+  },
 });
 const upload = multer({ storage: storage }).single('taskDocument');
 
@@ -70,7 +74,7 @@ router.post('/', auth, (req, res) => {
             });
 
             if (req.file) {
-                newLab.taskDocument = `/uploads/${req.file.filename}`;
+                newLab.taskDocument = req.file.path;
             }
 
             const savedLab = await newLab.save();

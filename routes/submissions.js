@@ -32,17 +32,21 @@ const auth = (req, res, next) => {
 };
 
 // Multer Config for Generic File Submissions (Images, PDF, ZIP)
-const uploadDirSub = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/submissions');
-const fs = require('fs');
-if (!process.env.VERCEL && !fs.existsSync(uploadDirSub)) {
-    fs.mkdirSync(uploadDirSub, { recursive: true });
-}
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination: uploadDirSub,
-    filename: function (req, file, cb) {
-        cb(null, 'SUB-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
-    }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'submissions',
+    resource_type: 'auto'
+  },
 });
 
 const upload = multer({
@@ -97,7 +101,7 @@ router.post('/', auth, (req, res) => {
             }
 
             const fileData = uploadedFile ? {
-                filePath: `/uploads/submissions/${uploadedFile.filename}`,
+                filePath: uploadedFile.path,
                 fileType: uploadedFile.mimetype.includes('pdf') ? 'pdf' : 
                           uploadedFile.mimetype.includes('zip') ? 'zip' : 'image'
             } : {};

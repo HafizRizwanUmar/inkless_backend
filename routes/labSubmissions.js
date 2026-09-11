@@ -19,17 +19,21 @@ const auth = (req, res, next) => {
     }
 };
 
-const uploadDirLabSub = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads/labSubmissions');
-const fs = require('fs');
-if (!process.env.VERCEL && !fs.existsSync(uploadDirLabSub)) {
-    fs.mkdirSync(uploadDirLabSub, { recursive: true });
-}
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination: uploadDirLabSub,
-    filename: function (req, file, cb) {
-        cb(null, 'LABSUB-' + Date.now() + path.extname(file.originalname));
-    }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'labSubmissions',
+    resource_type: 'auto'
+  },
 });
 const upload = multer({ storage: storage }).any(); // Allow multiple files
 
@@ -64,7 +68,7 @@ router.post('/', auth, (req, res) => {
         if (req.files) {
             req.files.forEach(file => {
                 if (file.fieldname === 'submittedDocument') {
-                    submittedDocPath = `/uploads/${file.filename}`;
+                    submittedDocPath = file.path;
                 } else if (file.fieldname.startsWith('image_')) {
                     // fieldname format: image_QUESTIONID
                     const questionId = file.fieldname.split('_')[1];
@@ -73,7 +77,7 @@ router.post('/', auth, (req, res) => {
                         if (!parsedAnswers[ansIndex].images) {
                             parsedAnswers[ansIndex].images = [];
                         }
-                        parsedAnswers[ansIndex].images.push(`/uploads/${file.filename}`);
+                        parsedAnswers[ansIndex].images.push(file.path);
                     }
                 }
             });
