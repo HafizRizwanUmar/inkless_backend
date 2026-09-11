@@ -56,35 +56,39 @@ try {
 
     const connectToMongo = async () => {
         if (!mongoURI) {
-            updateDbStatus(false, new Error('MONGO_URI is not defined.'));
             console.error('FATAL ERROR: MONGO_URI is not defined.');
+            return;
+        }
+
+        if (mongoose.connection.readyState === 1) {
             return;
         }
 
         try {
             await mongoose.connect(mongoURI, mongoOptions);
-            updateDbStatus(true);
             console.log('MongoDB connected');
         } catch (err) {
-            updateDbStatus(false, err);
             console.error('MongoDB connection error:', err.message);
+            throw err;
         }
     };
 
-    connectToMongo();
-
-    app.use((req, res, next) => {
+    app.use(async (req, res, next) => {
         if (req.path === '/health' || req.path === '/' || req.path.startsWith('/uploads')) {
             return next();
         }
 
-        if (req.path.startsWith('/api/') && !app.locals.dbConnected && mongoose.connection.readyState !== 1) {
-            return res.status(503).json({
-                error: 'Database unavailable',
-                message: 'MongoDB is not reachable. Start MongoDB or provide a valid MONGO_URI.'
-            });
+        if (req.path.startsWith('/api/')) {
+            try {
+                await connectToMongo();
+                return next();
+            } catch (err) {
+                return res.status(503).json({
+                    error: 'Database unavailable',
+                    message: err.message
+                });
+            }
         }
-
         next();
     });
 
